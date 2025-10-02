@@ -1,37 +1,30 @@
-uploadBtn.addEventListener('click', async () => {
-  if (!imageInput.files || imageInput.files.length === 0) {
-    alert('Please choose an image first');
-    return;
+const sharp = require("sharp");
+const formidable = require("formidable");
+
+module.exports = (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Only POST requests allowed" });
   }
 
-  const file = imageInput.files[0];
-  const reader = new FileReader();
+  const form = new formidable.IncomingForm();
 
-  reader.onloadend = async () => {
-    const base64Image = reader.result;
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      return res.status(500).json({ error: "Form parse error" });
+    }
 
     try {
-      const res = await fetch('/api/process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64Image, action: 'grayscale' }) // or pass user option
-      });
+      const file = files.image;
+      const buffer = require("fs").readFileSync(file.filepath);
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || 'Server error');
-      }
+      let processed = sharp(buffer).grayscale(); // example
+      const outputBuffer = await processed.toBuffer();
 
-      const data = await res.json();
-      result.innerHTML = `
-        <p>Processed image:</p>
-        <img src="${data.image}" alt="processed"/>
-        <br><a href="${data.image}" download="processed.png" class="download-btn">Download Image</a>
-      `;
-    } catch (err) {
-      result.innerHTML = `<span style="color:red;">Upload failed: ${err.message}</span>`;
+      res.setHeader("Content-Type", "image/png");
+      res.send(outputBuffer);
+    } catch (e) {
+      console.error("Processing error", e);
+      res.status(500).json({ error: "Image processing failed" });
     }
-  };
-
-  reader.readAsDataURL(file);
-});
+  });
+};
