@@ -1,0 +1,52 @@
+import formidable from "formidable";
+import fs from "fs";
+import sharp from "sharp";
+
+export const config = {
+  api: {
+    bodyParser: false, // Disables default body parser so we can handle FormData
+  },
+};
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).send("Method Not Allowed");
+  }
+
+  const form = new formidable.IncomingForm();
+
+  form.parse(req, async (err, fields, files) => {
+    if (err) return res.status(500).send("Error parsing form");
+
+    try {
+      const options = JSON.parse(fields.options);
+      const file = files.image[0];
+      const buffer = fs.readFileSync(file.filepath);
+
+      let image = sharp(buffer);
+
+      // Apply options
+      if (options.grayscale) image = image.grayscale();
+      if (options.flip) image = image.flip();
+      if (options.flop) image = image.flop();
+      if (options.rotate) image = image.rotate(options.rotate);
+      if (options.resizeWidth || options.resizeHeight) {
+        image = image.resize(options.resizeWidth, options.resizeHeight);
+      }
+      if (options.blur) image = image.blur(options.blur);
+      if (options.brightness || options.contrast) {
+        image = image.modulate({
+          brightness: options.brightness || 1,
+          contrast: options.contrast || 1
+        });
+      }
+
+      const outBuffer = await image.png().toBuffer();
+
+      res.setHeader("Content-Type", "image/png");
+      res.send(outBuffer);
+    } catch (e) {
+      res.status(500).send("Error processing image: " + e.message);
+    }
+  });
+}
