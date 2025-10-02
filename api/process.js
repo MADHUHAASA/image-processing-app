@@ -1,30 +1,67 @@
-const sharp = require("sharp");
-const formidable = require("formidable");
+// api/process.js
+import sharp from "sharp";
 
-module.exports = (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Only POST requests allowed" });
   }
 
-  const form = new formidable.IncomingForm();
+  try {
+    const { image, action, options } = req.body;
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      return res.status(500).json({ error: "Form parse error" });
+    if (!image) {
+      return res.status(400).json({ error: "No image provided" });
     }
 
-    try {
-      const file = files.image;
-      const buffer = require("fs").readFileSync(file.filepath);
+    // Decode base64 image
+    const buffer = Buffer.from(image.split(",")[1], "base64");
 
-      let processed = sharp(buffer).grayscale(); // example
-      const outputBuffer = await processed.toBuffer();
+    let processed = sharp(buffer);
 
-      res.setHeader("Content-Type", "image/png");
-      res.send(outputBuffer);
-    } catch (e) {
-      console.error("Processing error", e);
-      res.status(500).json({ error: "Image processing failed" });
+    // Apply transformations
+    switch (action) {
+      case "grayscale":
+        processed = processed.grayscale();
+        break;
+      case "flipV":
+        processed = processed.flip();
+        break;
+      case "flipH":
+        processed = processed.flop();
+        break;
+      case "rotate":
+        processed = processed.rotate(options?.angle || 90);
+        break;
+      case "resize":
+        processed = processed.resize(
+          options?.width || 300,
+          options?.height || 300
+        );
+        break;
+      case "brightness":
+        processed = processed.modulate({
+          brightness: options?.value || 1.2,
+        });
+        break;
+      case "contrast":
+        processed = processed.linear(options?.value || 1.2, 0);
+        break;
+      case "blur":
+        processed = processed.blur(options?.value || 2);
+        break;
+      default:
+        break;
     }
-  });
-};
+
+    // Convert back to base64
+    const outputBuffer = await processed.png().toBuffer();
+    const base64Image = `data:image/png;base64,${outputBuffer.toString(
+      "base64"
+    )}`;
+
+    res.status(200).json({ image: base64Image });
+  } catch (err) {
+    console.error("Error processing image:", err);
+    res.status(500).json({ error: "Failed to process image" });
+  }
+}
