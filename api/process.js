@@ -1,7 +1,7 @@
 // api/process.js
-import sharp from "sharp";
+const sharp = require("sharp");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Only POST requests allowed" });
   }
@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No image provided" });
     }
 
-    // Decode base64 image
+    // Convert base64 → Buffer
     const buffer = Buffer.from(image.split(",")[1], "base64");
 
     let processed = sharp(buffer);
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
         break;
     }
 
-    // Convert back to base64
+    // Convert processed buffer → Base64
     const outputBuffer = await processed.png().toBuffer();
     const base64Image = `data:image/png;base64,${outputBuffer.toString(
       "base64"
@@ -64,4 +64,4 @@ export default async function handler(req, res) {
     console.error("Error processing image:", err);
     res.status(500).json({ error: "Failed to process image" });
   }
-}
+};
