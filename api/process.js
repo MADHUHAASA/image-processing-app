@@ -1,52 +1,37 @@
-const sharp = require("sharp");
-
-module.exports = async (req, res) => {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST requests allowed" });
+uploadBtn.addEventListener('click', async () => {
+  if (!imageInput.files || imageInput.files.length === 0) {
+    alert('Please choose an image first');
+    return;
   }
 
-  try {
-    const { image, action } = req.body;
+  const file = imageInput.files[0];
+  const reader = new FileReader();
 
-    if (!image) {
-      return res.status(400).json({ error: "No image provided" });
+  reader.onloadend = async () => {
+    const base64Image = reader.result;
+
+    try {
+      const res = await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Image, action: 'grayscale' }) // or pass user option
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || 'Server error');
+      }
+
+      const data = await res.json();
+      result.innerHTML = `
+        <p>Processed image:</p>
+        <img src="${data.image}" alt="processed"/>
+        <br><a href="${data.image}" download="processed.png" class="download-btn">Download Image</a>
+      `;
+    } catch (err) {
+      result.innerHTML = `<span style="color:red;">Upload failed: ${err.message}</span>`;
     }
+  };
 
-    const buffer = Buffer.from(image.split(",")[1], "base64");
-    let processed = sharp(buffer);
-
-    switch (action) {
-      case "grayscale":
-        processed = processed.grayscale();
-        break;
-      case "flip":
-        processed = processed.flip();
-        break;
-      case "rotate":
-        processed = processed.rotate(90);
-        break;
-      case "resize":
-        processed = processed.resize(300, 300);
-        break;
-      case "contrast":
-        processed = processed.gamma(2); // use gamma for contrast
-        break;
-      case "brightness":
-        processed = processed.modulate({ brightness: 1.5 });
-        break;
-      case "blur":
-        processed = processed.blur(3);
-        break;
-      default:
-        break;
-    }
-
-    const outputBuffer = await processed.toBuffer();
-    const base64Image = `data:image/png;base64,${outputBuffer.toString("base64")}`;
-
-    res.status(200).json({ image: base64Image });
-  } catch (err) {
-    console.error("Error processing image:", err);
-    res.status(500).json({ error: "Failed to process image" });
-  }
-};
+  reader.readAsDataURL(file);
+});
