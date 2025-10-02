@@ -251,9 +251,28 @@
           result.innerHTML = `<span style="color:red;">Upload failed: ${err.message}</span>`;
         } finally {
           progress.style.display = 'none';
-        }
+        }async function uploadAndProcess(action) {
+  const file = document.querySelector("input[type=file]").files[0];
+  const reader = new FileReader();
+
+  reader.onloadend = async () => {
+    const base64Image = reader.result;
+
+    let response = await fetch("/api/process", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: base64Image, action })
+    });
+
+    let data = await response.json();
+    document.getElementById("resultImage").src = data.image;
+  };
+
+  reader.readAsDataURL(file);
+}
       });
     });
   </script>
 </body>
 </html>
+
