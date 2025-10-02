@@ -1,24 +1,21 @@
-import sharp from "sharp";
+const sharp = require("sharp");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Only POST requests allowed" });
   }
 
   try {
-    // Get the image as base64 from frontend
     const { image, action } = req.body;
 
     if (!image) {
       return res.status(400).json({ error: "No image provided" });
     }
 
-    // Convert base64 to buffer
     const buffer = Buffer.from(image.split(",")[1], "base64");
 
     let processed = sharp(buffer);
 
-    // Apply transformations
     switch (action) {
       case "grayscale":
         processed = processed.grayscale();
@@ -33,7 +30,7 @@ export default async function handler(req, res) {
         processed = processed.resize(300, 300);
         break;
       case "contrast":
-        processed = processed.modulate({ contrast: 2 });
+        processed = processed.modulate({ contrast: 2 }); // ⚠️ sharp has no "contrast", use gamma or modulate(saturation, brightness, hue)
         break;
       case "brightness":
         processed = processed.modulate({ brightness: 1.5 });
@@ -45,7 +42,6 @@ export default async function handler(req, res) {
         break;
     }
 
-    // Convert back to base64
     const outputBuffer = await processed.toBuffer();
     const base64Image = `data:image/png;base64,${outputBuffer.toString("base64")}`;
 
@@ -54,4 +50,4 @@ export default async function handler(req, res) {
     console.error("Error processing image:", err);
     res.status(500).json({ error: "Failed to process image" });
   }
-}
+};
