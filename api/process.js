@@ -13,7 +13,6 @@ module.exports = async (req, res) => {
     }
 
     const buffer = Buffer.from(image.split(",")[1], "base64");
-
     let processed = sharp(buffer);
 
     switch (action) {
@@ -30,7 +29,7 @@ module.exports = async (req, res) => {
         processed = processed.resize(300, 300);
         break;
       case "contrast":
-        processed = processed.modulate({ contrast: 2 }); // ⚠️ sharp has no "contrast", use gamma or modulate(saturation, brightness, hue)
+        processed = processed.gamma(2); // use gamma for contrast
         break;
       case "brightness":
         processed = processed.modulate({ brightness: 1.5 });
