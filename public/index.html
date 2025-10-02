@@ -4,45 +4,256 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Image Processor</title>
-  <!-- Correct path for CSS -->
-<link rel="stylesheet" href="styles.css">
+  
+  <!-- Inline CSS -->
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      color: #222;
+    }
 
+    .container {
+      max-width: 520px;
+      margin: 48px auto;
+      background: #fff;
+      padding: 36px 32px 32px 32px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+      border: 1px solid #e3e3e3;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.3rem;
+      font-weight: 700;
+      color: #2a4d7c;
+      margin-bottom: 18px;
+      letter-spacing: 1px;
+    }
+
+    .file-label, input[type="file"] {
+      display: inline-block;
+      padding: 12px 18px;
+      border-radius: 8px;
+      background: #e3f0ff;
+      color: #2a4d7c;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid #b3d1f7;
+      transition: background 0.2s, color 0.2s;
+      margin-bottom: 18px;
+    }
+    .file-label:hover, input[type="file"]:hover {
+      background: #cbe2ff;
+      color: #17406b;
+    }
+
+    input[type="file"] {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    .edit-options {
+      background: #f7faff;
+      border-radius: 10px;
+      border: 1px solid #e3e3e3;
+      padding: 18px 12px;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+    .edit-options h2 {
+      font-size: 1.1rem;
+      color: #3576d1;
+      margin-bottom: 10px;
+    }
+    .edit-options label {
+      font-size: 15px;
+      margin: 8px 12px 8px 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .edit-options input[type="number"] {
+      width: 60px;
+      padding: 5px;
+      border: 1px solid #b3d1f7;
+      border-radius: 5px;
+      margin-left: 4px;
+    }
+
+    #uploadBtn {
+      background: linear-gradient(90deg, #2a4d7c 0%, #4e8cff 100%);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      margin-top: 15px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(46, 76, 124, 0.08);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    #uploadBtn:hover {
+      background: linear-gradient(90deg, #17406b 0%, #3576d1 100%);
+      box-shadow: 0 4px 16px rgba(46, 76, 124, 0.12);
+    }
+
+    #result {
+      margin-top: 32px;
+      padding: 18px;
+      background: #f7faff;
+      border-radius: 8px;
+      border: 1px solid #e3e3e3;
+      min-height: 80px;
+      font-size: 1.1rem;
+      color: #2a4d7c;
+    }
+
+    #result img {
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(46, 76, 124, 0.10);
+      max-width: 100%;
+      margin-top: 18px;
+      border: 1px solid #e3e3e3;
+    }
+
+    .download-btn {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 12px 24px;
+      background: linear-gradient(90deg, #4e8cff 0%, #2a4d7c 100%);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46, 76, 124, 0.08);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .download-btn:hover {
+      background: linear-gradient(90deg, #3576d1 0%, #17406b 100%);
+      box-shadow: 0 4px 16px rgba(46, 76, 124, 0.12);
+    }
+  </style>
 </head>
 <body>
-  <h1>Image Processor</h1>
+  <div class="container">
+    <h1>Image Processor</h1>
 
-  <div class="upload-section">
-    <input type="file" id="fileInput" />
-    <span>Select an image</span>
+    <div>
+      <input type="file" id="imageInput" />
+      <span>Select an image</span>
+    </div>
+
+    <div class="edit-options">
+      <h2>Edit Options</h2>
+      <label><input type="checkbox" id="grayscale"> Grayscale</label>
+      <label><input type="checkbox" id="flip"> Flip Vertically</label>
+      <label><input type="checkbox" id="flop"> Flip Horizontally</label>
+      <br />
+      <label>Rotate: <input type="number" id="rotate" value="0">°</label>
+      <label>Resize Width: <input type="number" id="resizeWidth" value="1200"></label>
+      <label>Resize Height: <input type="number" id="resizeHeight" value="800"></label>
+      <label>Max File Size (KB): <input type="number" id="maxSize" value="1024"></label>
+      <br />
+      <label>Blur: <input type="number" id="blur" value="0"></label>
+      <label>Brightness: <input type="number" id="brightness" value="1"></label>
+      <label>Contrast: <input type="number" id="contrast" value="0.8"></label>
+    </div>
+
+    <button id="uploadBtn">Upload & Process</button>
+    <p id="progress" style="display:none;"></p>
+
+    <h3>Result</h3>
+    <div id="result">No image yet.</div>
   </div>
 
-  <h3>Edit Options</h3>
-  <div class="options">
-    <label><input type="checkbox" id="grayscale"> Grayscale</label>
-    <label><input type="checkbox" id="flipV"> Flip Vertically</label>
-    <label><input type="checkbox" id="flipH"> Flip Horizontally</label>
-    <br />
-    <label>Rotate: <input type="number" id="rotate" value="0">°</label>
-    <label>Resize Width: <input type="number" id="resizeWidth" value="1200"></label>
-    <label>Resize Height: <input type="number" id="resizeHeight" value="800"></label>
-    <label>Max File Size (KB): <input type="number" id="maxFileSize" value="1024"></label>
-    <br />
-    <label>Blur: <input type="number" id="blur" value="0"></label>
-    <label>Brightness: <input type="number" id="brightness" value="1"></label>
-    <label>Contrast: <input type="number" id="contrast" value="0.8"></label>
-  </div>
+  <!-- Inline JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const uploadBtn = document.getElementById('uploadBtn');
+      const imageInput = document.getElementById('imageInput');
+      const result = document.getElementById('result');
+      const progress = document.getElementById('progress');
 
-  <button id="processBtn">Upload & Process</button>
+      // Edit option elements
+      const grayscale = document.getElementById('grayscale');
+      const flip = document.getElementById('flip');
+      const flop = document.getElementById('flop');
+      const rotate = document.getElementById('rotate');
+      const resizeWidth = document.getElementById('resizeWidth');
+      const resizeHeight = document.getElementById('resizeHeight');
+      const maxSize = document.getElementById('maxSize');
+      const blur = document.getElementById('blur');
+      const brightness = document.getElementById('brightness');
+      const contrast = document.getElementById('contrast');
 
-  <h3>Result</h3>
-  <div id="result">No image yet.</div>
+      uploadBtn.addEventListener('click', async () => {
+        if (!imageInput.files || imageInput.files.length === 0) {
+          alert('Please choose an image first');
+          return;
+        }
 
-  <!-- Correct path for JS -->
-  <script src="script.js"></script>
+        const file = imageInput.files[0];
+        result.innerHTML = '<span style="color:#888;">Uploading and processing...</span>';
+        progress.style.display = 'block';
+        progress.textContent = 'Uploading and processing...';
+
+        // Collect options
+        const options = {
+          grayscale: grayscale.checked,
+          flip: flip.checked,
+          flop: flop.checked,
+          rotate: parseInt(rotate.value) || 0,
+          resizeWidth: parseInt(resizeWidth.value) || 1200,
+          resizeHeight: parseInt(resizeHeight.value) || 800,
+          maxSize: parseInt(maxSize.value) || 1024,
+          blur: parseFloat(blur.value) || 0,
+          brightness: parseFloat(brightness.value) || 1,
+          contrast: parseFloat(contrast.value) || 1
+        };
+
+        try {
+          // Check file size before upload
+          if (file.size > (parseInt(maxSize.value) || 1024) * 1024) {
+            throw new Error('File size exceeds the selected max size.');
+          }
+          // Send image and options as FormData
+          const formData = new FormData();
+          formData.append('image', file);
+          formData.append('options', JSON.stringify(options));
+
+          const res = await fetch('/api/process', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(errText || 'Server error');
+          }
+
+          // Get the processed image as a blob
+          const blob = await res.blob();
+          const imgUrl = URL.createObjectURL(blob);
+          result.innerHTML = `
+            <p>Processed image:</p>
+            <img src="${imgUrl}" alt="processed" style="max-width:100%;height:auto;"/>
+            <br><a href="${imgUrl}" download="processed.png" class="download-btn">Download Image</a>
+          `;
+        } catch (err) {
+          result.innerHTML = `<span style="color:red;">Upload failed: ${err.message}</span>`;
+        } finally {
+          progress.style.display = 'none';
+        }
+      });
+    });
+  </script>
 </body>
 </html>
-
-
-
-
-
