@@ -1,7 +1,7 @@
 // api/process.js
-const sharp = require("sharp");
+import sharp from "sharp";
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Only POST requests allowed" });
   }
@@ -13,11 +13,12 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "No image provided" });
     }
 
-    // Decode Base64 image
+    // Decode base64 image
     const buffer = Buffer.from(image.split(",")[1], "base64");
+
     let processed = sharp(buffer);
 
-    // Actions
+    // Apply transformations
     switch (action) {
       case "grayscale":
         processed = processed.grayscale();
@@ -32,10 +33,15 @@ module.exports = async (req, res) => {
         processed = processed.rotate(options?.angle || 90);
         break;
       case "resize":
-        processed = processed.resize(options?.width || 300, options?.height || 300);
+        processed = processed.resize(
+          options?.width || 300,
+          options?.height || 300
+        );
         break;
       case "brightness":
-        processed = processed.modulate({ brightness: options?.value || 1.2 });
+        processed = processed.modulate({
+          brightness: options?.value || 1.2,
+        });
         break;
       case "contrast":
         processed = processed.linear(options?.value || 1.2, 0);
@@ -47,12 +53,15 @@ module.exports = async (req, res) => {
         break;
     }
 
+    // Convert back to base64
     const outputBuffer = await processed.png().toBuffer();
-    const base64Image = `data:image/png;base64,${outputBuffer.toString("base64")}`;
+    const base64Image = `data:image/png;base64,${outputBuffer.toString(
+      "base64"
+    )}`;
 
     res.status(200).json({ image: base64Image });
   } catch (err) {
     console.error("Error processing image:", err);
     res.status(500).json({ error: "Failed to process image" });
   }
-};
+}
