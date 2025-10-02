@@ -13,12 +13,11 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "No image provided" });
     }
 
-    // Convert base64 → Buffer
+    // Decode Base64 image
     const buffer = Buffer.from(image.split(",")[1], "base64");
-
     let processed = sharp(buffer);
 
-    // Apply transformations
+    // Actions
     switch (action) {
       case "grayscale":
         processed = processed.grayscale();
@@ -33,15 +32,10 @@ module.exports = async (req, res) => {
         processed = processed.rotate(options?.angle || 90);
         break;
       case "resize":
-        processed = processed.resize(
-          options?.width || 300,
-          options?.height || 300
-        );
+        processed = processed.resize(options?.width || 300, options?.height || 300);
         break;
       case "brightness":
-        processed = processed.modulate({
-          brightness: options?.value || 1.2,
-        });
+        processed = processed.modulate({ brightness: options?.value || 1.2 });
         break;
       case "contrast":
         processed = processed.linear(options?.value || 1.2, 0);
@@ -53,11 +47,8 @@ module.exports = async (req, res) => {
         break;
     }
 
-    // Convert processed buffer → Base64
     const outputBuffer = await processed.png().toBuffer();
-    const base64Image = `data:image/png;base64,${outputBuffer.toString(
-      "base64"
-    )}`;
+    const base64Image = `data:image/png;base64,${outputBuffer.toString("base64")}`;
 
     res.status(200).json({ image: base64Image });
   } catch (err) {
